@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Phone Auth Demo</title>
+</head>
+<body style="font-family: Arial; text-align:center; margin-top:50px;">
+
+  <h2>Login with Phone</h2>
+
+  <!-- Step 1: Enter Phone Number -->
+  <div id="step1">
+    <input type="tel" id="phoneNumber" placeholder="+91XXXXXXXXXX" style="padding:10px; width:200px;">
+    <br><br>
+    <div id="recaptcha-container"></div>
+    <br>
+    <button onclick="sendOTP()">Next</button>
+  </div>
+
+  <!-- Step 2: Enter OTP -->
+  <div id="step2" style="display:none;">
+    <input type="text" id="otpCode" placeholder="Enter OTP" style="padding:10px; width:200px;">
+    <br><br>
+    <button onclick="verifyOTP()">Verify</button>
+  </div>
+
+  <h3 id="message"></h3>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { 
+    getAuth, 
+    RecaptchaVerifier, 
+    signInWithPhoneNumber 
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  // ✅ Your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCQxwALTZFr7ZnYl2BzmCqy-HMdePAttDI",
+    authDomain: "bitrue-3f2a1.firebaseapp.com",
+    projectId: "bitrue-3f2a1",
+    storageBucket: "bitrue-3f2a1.appspot.com",
+    messagingSenderId: "927902537607",
+    appId: "1:927902537607:web:1c7b538c6efd6ac7a1e522"
+  };
+
+  // ✅ Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  let confirmationResult;
+
+  // ✅ Setup reCAPTCHA
+  window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    size: 'normal',   // shows a checkbox instead of invisible
+    callback: (response) => {
+      console.log("reCAPTCHA solved!");
+    }
+  });
+
+  // ✅ Send OTP
+  window.sendOTP = function () {
+    const phoneNumber = document.getElementById("phoneNumber").value;
+    signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
+      .then((result) => {
+        confirmationResult = result;
+        document.getElementById("step1").style.display = "none";
+        document.getElementById("step2").style.display = "block";
+      })
+      .catch((error) => {
+        document.getElementById("message").innerText = error.message;
+      });
+  }
+
+  // ✅ Verify OTP
+  window.verifyOTP = function () {
+    const code = document.getElementById("otpCode").value;
+    confirmationResult.confirm(code)
+      .then((result) => {
+        document.getElementById("message").innerText = 
+          "✅ Verification successful! Welcome " + result.user.phoneNumber;
+      })
+      .catch((error) => {
+        document.getElementById("message").innerText = "❌ Wrong OTP. Try again.";
+      });
+  }
+</script>
+</body>
+</html>
